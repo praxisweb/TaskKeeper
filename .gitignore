@@ -1,0 +1,10 @@
+.planning/qa_baseline.md
+.planning/fix_plan_remediation.md
+.ralph/logs/
+.env
+.env.proxy
+.env.container
+__pycache__/
+*.pyc
+.pytest_cache/
+node_modules/
