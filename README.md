@@ -49,6 +49,8 @@ Follow these steps to get the application running locally on your machine:
    ```bash
    uvicorn main:app --reload
    ```
+   > [!WARNING]
+   > **Security Note:** TaskKeeper does not contain authentication. Keep the server bound to `127.0.0.1` (the default) to prevent unauthorized access from other machines on your local network. Do not run with `--host 0.0.0.0` unless you have implemented network-level access controls or authentication.
 
 5. **Open in browser:**
    - App: [http://localhost:8000](http://localhost:8000)
