@@ -185,6 +185,56 @@ def update_task(task_id: int, task: TaskIn):
     return data
 
 
+@app.delete("/tasks/{task_id}", response_model=TaskOut)
+def soft_delete_task(task_id: int):
+    with get_db() as conn:
+        existing = conn.execute("SELECT id FROM tasks WHERE id = ?", (task_id,)).fetchone()
+        if not existing:
+            raise HTTPException(status_code=404, detail="Task not found")
+        
+        conn.execute("UPDATE tasks SET deleted = 1 WHERE id = ?", (task_id,))
+        conn.commit()
+        
+        row = conn.execute(
+            "SELECT id, title, status, description, priority, due_date, created_at, deleted FROM tasks WHERE id = ?",
+            (task_id,),
+        ).fetchone()
+    data = dict(row)
+    data["deleted"] = bool(data["deleted"])
+    return data
+
+
+@app.post("/tasks/{task_id}/restore", response_model=TaskOut)
+def restore_task(task_id: int):
+    with get_db() as conn:
+        existing = conn.execute("SELECT id FROM tasks WHERE id = ?", (task_id,)).fetchone()
+        if not existing:
+            raise HTTPException(status_code=404, detail="Task not found")
+        
+        conn.execute("UPDATE tasks SET deleted = 0 WHERE id = ?", (task_id,))
+        conn.commit()
+        
+        row = conn.execute(
+            "SELECT id, title, status, description, priority, due_date, created_at, deleted FROM tasks WHERE id = ?",
+            (task_id,),
+        ).fetchone()
+    data = dict(row)
+    data["deleted"] = bool(data["deleted"])
+    return data
+
+
+@app.delete("/tasks/{task_id}/permanent")
+def permanent_delete_task(task_id: int):
+    with get_db() as conn:
+        existing = conn.execute("SELECT id FROM tasks WHERE id = ?", (task_id,)).fetchone()
+        if not existing:
+            raise HTTPException(status_code=404, detail="Task not found")
+        
+        conn.execute("DELETE FROM tasks WHERE id = ?", (task_id,))
+        conn.commit()
+    return {"detail": "Task permanently deleted"}
+
+
 @app.get("/", response_class=FileResponse)
 def serve_frontend():
     # Absolute path — works regardless of where uvicorn is invoked from

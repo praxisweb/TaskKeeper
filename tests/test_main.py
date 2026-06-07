@@ -199,6 +199,54 @@ def test_update_task_not_found(client):
     assert response.status_code == 404
 
 
+def test_soft_delete_task(client):
+    task = client.post("/tasks", json={"title": "Trash me"}).json()
+    task_id = task["id"]
+
+    response = client.delete(f"/tasks/{task_id}")
+    assert response.status_code == 200
+    assert response.json()["deleted"] is True
+
+    # Active tasks should not return soft-deleted tasks
+    active_tasks = client.get("/tasks").json()
+    assert all(t["id"] != task_id for t in active_tasks)
+
+    # Deleted tasks list should return it
+    deleted_tasks = client.get("/tasks?deleted=true").json()
+    assert any(t["id"] == task_id for t in deleted_tasks)
+
+
+def test_restore_task(client):
+    task = client.post("/tasks", json={"title": "Save me"}).json()
+    task_id = task["id"]
+
+    client.delete(f"/tasks/{task_id}")
+    response = client.post(f"/tasks/{task_id}/restore")
+    assert response.status_code == 200
+    assert response.json()["deleted"] is False
+
+    active_tasks = client.get("/tasks").json()
+    assert any(t["id"] == task_id for t in active_tasks)
+
+
+def test_permanent_delete_task(client):
+    task = client.post("/tasks", json={"title": "Vanish me"}).json()
+    task_id = task["id"]
+
+    response = client.delete(f"/tasks/{task_id}/permanent")
+    assert response.status_code == 200
+    assert response.json() == {"detail": "Task permanently deleted"}
+
+    all_deleted = client.get("/tasks?deleted=true").json()
+    assert all(t["id"] != task_id for t in all_deleted)
+
+
+def test_permanent_delete_not_found(client):
+    response = client.delete("/tasks/99999/permanent")
+    assert response.status_code == 404
+
+
+
 
 
 

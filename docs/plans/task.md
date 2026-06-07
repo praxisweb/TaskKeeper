@@ -8,9 +8,9 @@
 | Task 4 | Serve the frontend (index.html, serve static, integration tests, E2E check) | [x] completed |
 | Task 5 | [01-01-01] Add dynamic SQLite database schema migration on startup | [x] completed |
 | Task 6 | [01-01-02] Expand Pydantic TaskIn and TaskOut schemas with validations | [x] completed |
-| Task 7 | [01-01-03] Implement PUT /tasks/{id} endpoint | [/] in progress |
-| Task 8 | [01-02-01] Add soft-delete and restore endpoints | [ ] pending |
-| Task 9 | [01-02-02] Add permanent-delete endpoint | [ ] pending |
-| Task 10 | [01-02-03] Implement GET /tasks query parameter filtering for deleted and status | [ ] pending |
+| Task 7 | [01-01-03] Implement PUT /tasks/{id} endpoint | [x] completed |
+| Task 8 | [01-02-01] Add soft-delete and restore endpoints | [/] in progress |
+| Task 9 | [01-02-02] Add permanent-delete endpoint | [/] in progress |
+| Task 10 | [01-02-03] Implement GET /tasks query parameter filtering for deleted and status | [/] in progress |
 | Task 11 | [02-01-01] Implement Kanban board frontend (Phase 2 UI) | [ ] pending |
 
