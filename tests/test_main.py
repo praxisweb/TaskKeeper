@@ -96,6 +96,160 @@ def test_frontend_route_exists(client, monkeypatch):
         shutil.rmtree(temp_dir, ignore_errors=True)
 
 
+def test_database_migrations_safe(tmp_path):
+    import sqlite3
+    import main
+    # Setup: Create a legacy database without description, priority, due_date, deleted columns
+    legacy_db = str(tmp_path / "legacy.db")
+    with sqlite3.connect(legacy_db) as conn:
+        conn.execute("""
+            CREATE TABLE tasks (
+                id         INTEGER PRIMARY KEY AUTOINCREMENT,
+                title      TEXT NOT NULL,
+                status     TEXT NOT NULL DEFAULT 'todo'
+                           CHECK(status IN ('todo', 'in_progress', 'done')),
+                created_at TEXT NOT NULL DEFAULT (datetime('now'))
+            )
+        """)
+        conn.execute("INSERT INTO tasks (title, status) VALUES ('Legacy Task', 'todo')")
+        conn.commit()
+
+    # Execution: Trigger init_db with the patched path
+    orig_db = main.DB_PATH
+    main.DB_PATH = legacy_db
+    try:
+        main.init_db()
+        
+        # Verification: Check that new columns exist and legacy data is intact
+        with sqlite3.connect(legacy_db) as conn:
+            conn.row_factory = sqlite3.Row
+            row = conn.execute("SELECT * FROM tasks WHERE title = 'Legacy Task'").fetchone()
+            assert "description" in row.keys()
+            assert row["description"] is None
+            assert row["priority"] == "medium"
+            assert row["due_date"] is None
+            assert row["deleted"] == 0
+    finally:
+        main.DB_PATH = orig_db
+
+
+def test_create_task_all_fields_success(client):
+    payload = {
+        "title": "Clean room",
+        "status": "todo",
+        "description": "Sweep and dust",
+        "priority": "high",
+        "due_date": "2026-06-30"
+    }
+    response = client.post("/tasks", json=payload)
+    assert response.status_code == 201
+    data = response.json()
+    assert data["title"] == "Clean room"
+    assert data["description"] == "Sweep and dust"
+    assert data["priority"] == "high"
+    assert data["due_date"] == "2026-06-30"
+    assert data["deleted"] is False
+
+
+def test_create_task_rejects_invalid_due_date_format(client):
+    payload = {
+        "title": "Clean room",
+        "due_date": "06/30/2026"
+    }
+    response = client.post("/tasks", json=payload)
+    assert response.status_code == 422
+
+
+def test_create_task_rejects_invalid_priority(client):
+    payload = {
+        "title": "Clean room",
+        "priority": "critical"
+    }
+    response = client.post("/tasks", json=payload)
+    assert response.status_code == 422
+
+
+def test_update_task_success(client):
+    task = client.post("/tasks", json={"title": "Fix bug", "status": "todo"}).json()
+    task_id = task["id"]
+
+    payload = {
+        "title": "Fix critical bug",
+        "status": "in_progress",
+        "description": "Race condition in queue",
+        "priority": "high",
+        "due_date": "2026-06-15"
+    }
+    response = client.put(f"/tasks/{task_id}", json=payload)
+    assert response.status_code == 200
+    data = response.json()
+    assert data["title"] == "Fix critical bug"
+    assert data["status"] == "in_progress"
+    assert data["description"] == "Race condition in queue"
+    assert data["priority"] == "high"
+    assert data["due_date"] == "2026-06-15"
+
+
+def test_update_task_not_found(client):
+    payload = {
+        "title": "Not exists",
+        "status": "todo"
+    }
+    response = client.put("/tasks/99999", json=payload)
+    assert response.status_code == 404
+
+
+def test_soft_delete_task(client):
+    task = client.post("/tasks", json={"title": "Trash me"}).json()
+    task_id = task["id"]
+
+    response = client.delete(f"/tasks/{task_id}")
+    assert response.status_code == 200
+    assert response.json()["deleted"] is True
+
+    # Active tasks should not return soft-deleted tasks
+    active_tasks = client.get("/tasks").json()
+    assert all(t["id"] != task_id for t in active_tasks)
+
+    # Deleted tasks list should return it
+    deleted_tasks = client.get("/tasks?deleted=true").json()
+    assert any(t["id"] == task_id for t in deleted_tasks)
+
+
+def test_restore_task(client):
+    task = client.post("/tasks", json={"title": "Save me"}).json()
+    task_id = task["id"]
+
+    client.delete(f"/tasks/{task_id}")
+    response = client.post(f"/tasks/{task_id}/restore")
+    assert response.status_code == 200
+    assert response.json()["deleted"] is False
+
+    active_tasks = client.get("/tasks").json()
+    assert any(t["id"] == task_id for t in active_tasks)
+
+
+def test_permanent_delete_task(client):
+    task = client.post("/tasks", json={"title": "Vanish me"}).json()
+    task_id = task["id"]
+
+    response = client.delete(f"/tasks/{task_id}/permanent")
+    assert response.status_code == 200
+    assert response.json() == {"detail": "Task permanently deleted"}
+
+    all_deleted = client.get("/tasks?deleted=true").json()
+    assert all(t["id"] != task_id for t in all_deleted)
+
+
+def test_permanent_delete_not_found(client):
+    response = client.delete("/tasks/99999/permanent")
+    assert response.status_code == 404
+
+
+
+
+
+
 
 
 

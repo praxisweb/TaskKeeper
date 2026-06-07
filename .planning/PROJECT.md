@@ -19,26 +19,27 @@ A fast, friction-free way to manage personal tasks across a Kanban board (To Do 
 
 ### Validated
 
-(None yet — ship to validate)
+- [x] **TASK-01**: User can create a task with a title, optional description, due date, and priority (low / medium / high) [Phase 1 & 2]
+- [x] **TASK-02**: User can edit any field of an existing task [Phase 1 & 2]
+- [x] **TASK-03**: User can mark a task complete (moves it to Done column) [Phase 1 & 2]
+- [x] **TASK-04**: User can move tasks between To Do, In Progress, and Done columns [Phase 1 & 2]
+- [x] **TASK-05**: User can soft-delete a task (removed from main board) [Phase 1 & 2]
+- [x] **TASK-06**: User can view a trash screen showing all soft-deleted tasks [Phase 1 & 2]
+- [x] **TASK-07**: User can restore a soft-deleted task back to its previous status [Phase 1 & 2]
+- [x] **TASK-08**: User can permanently delete a task from trash [Phase 1 & 2]
+- [x] **API-01**: REST API exposes CRUD endpoints for tasks [Phase 1]
+- [x] **API-02**: API supports filtering tasks by status and deleted state [Phase 1]
+- [x] **UI-01**: Kanban board with three columns: To Do, In Progress, Done [Phase 2]
+- [x] **UI-02**: Task cards show title, priority, and due date at a glance [Phase 2]
+- [x] **UI-03**: Inline create form within each column (or global add button) [Phase 2]
+- [x] **UI-04**: Task detail view/modal for editing description and all fields [Phase 2]
+- [x] **UI-05**: Trash view accessible from main board [Phase 2]
+- [x] **PERSIST-01**: All task data persisted in SQLite on disk (survives server restart) [Phase 1]
 
 ### Active
 
-- [ ] **TASK-01**: User can create a task with a title, optional description, due date, and priority (low / medium / high)
-- [ ] **TASK-02**: User can edit any field of an existing task
-- [ ] **TASK-03**: User can mark a task complete (moves it to Done column)
-- [ ] **TASK-04**: User can move tasks between To Do, In Progress, and Done columns
-- [ ] **TASK-05**: User can soft-delete a task (removed from main board)
-- [ ] **TASK-06**: User can view a trash screen showing all soft-deleted tasks
-- [ ] **TASK-07**: User can restore a soft-deleted task back to its previous status
-- [ ] **TASK-08**: User can permanently delete a task from trash
-- [ ] **API-01**: REST API exposes CRUD endpoints for tasks
-- [ ] **API-02**: API supports filtering tasks by status and deleted state
-- [ ] **UI-01**: Kanban board with three columns: To Do, In Progress, Done
-- [ ] **UI-02**: Task cards show title, priority, and due date at a glance
-- [ ] **UI-03**: Inline create form within each column (or global add button)
-- [ ] **UI-04**: Task detail view/modal for editing description and all fields
-- [ ] **UI-05**: Trash view accessible from main board
-- [ ] **PERSIST-01**: All task data persisted in SQLite on disk (survives server restart)
+(None - all v1 features validated)
+
 
 ### Out of Scope
 

@@ -4,7 +4,19 @@
 .env
 .env.proxy
 .env.container
+
+# Python
 __pycache__/
 *.pyc
+*.pyo
+*.egg-info/
 .pytest_cache/
-node_modules/npm instll
+venv/
+.venv/
+
+# SQLite databases (live data — never commit)
+*.db
+tasks.db
+
+# Node
+node_modules/

@@ -1,37 +1,68 @@
 # TaskKeeper
 
-A modern task management and tracking application.
+A single-user personal task manager featuring a **FastAPI** REST backend, **SQLite** persistence, and a modern single-page **Kanban** board styled with high-fidelity glassmorphism.
+
+## 🚀 Key Features
+- **Kanban Board:** Organize tasks into **To Do**, **In Progress**, and **Done** columns.
+- **Detailed Task Modal:** Add descriptions, select priorities (low, medium, high), set due dates, and update statuses.
+- **Visual Indicators:** Color-coded priority badges and warning highlights for overdue tasks.
+- **Soft-Delete & Trash Bin:** Delete tasks safely without losing them. View, restore, or permanently delete tasks from the Trash view.
+- **API Documentation:** Interactive Swagger UI automatically generated at `/docs`.
+- **Zero-Config Database:** Automatically initializes and self-migrates on startup.
 
 ---
 
-## 📚 Documentation Hub
-
-This repository maintains structured documentation to guide the project's vision, design, and execution. Below is the layout of the project's guidance artifacts:
-
-*   **🎯 [Goals & Vision](file:///c:/Users/jason/Documents/Code/TaskKeeper/docs/goals/README.md)**: Product goals, roadmap, success metrics, and user stories.
-*   **🏗️ [Architecture & System Design](file:///c:/Users/jason/Documents/Code/TaskKeeper/docs/architecture/README.md)**: System design diagrams, component breakdown, and data models.
-    *   **⚡ [Architecture Decisions (ADRs)](file:///c:/Users/jason/Documents/Code/TaskKeeper/docs/architecture/decisions/README.md)**: Log of Architectural Decision Records.
-*   **📋 [Engineering Guidance](file:///c:/Users/jason/Documents/Code/TaskKeeper/docs/guidance/README.md)**: Coding standards, development workflow, style guides, and local setup instructions.
+## 🛠️ Prerequisites
+- **Python 3.10+**
+- **pip**
 
 ---
 
-## 🚀 Getting Started
+## 💻 Local Setup & Run
 
-### Prerequisites
-- Node.js (v18+)
-- Git
+Follow these steps to get the application running locally on your machine:
 
-### Local Setup
-1. Clone the repository:
+1. **Clone the repository:**
    ```bash
    git clone <repo-url>
    cd TaskKeeper
    ```
-2. Install dependencies:
+
+2. **Create and activate a Python virtual environment:**
+   - **Windows (PowerShell/CMD):**
+     ```powershell
+     python -m venv .venv
+     .venv\Scripts\activate
+     ```
+   - **macOS/Linux:**
+     ```bash
+     python3 -m venv .venv
+     source .venv/bin/activate
+     ```
+
+3. **Install the dependencies:**
    ```bash
-   npm install
+   pip install -r requirements.txt
    ```
-3. Run the development server:
+
+4. **Run the development server:**
    ```bash
-   npm run dev
+   uvicorn main:app --reload
    ```
+   > [!WARNING]
+   > **Security Note:** TaskKeeper does not contain authentication. Keep the server bound to `127.0.0.1` (the default) to prevent unauthorized access from other machines on your local network. Do not run with `--host 0.0.0.0` unless you have implemented network-level access controls or authentication.
+
+5. **Open in browser:**
+   - App: [http://localhost:8000](http://localhost:8000)
+   - Swagger API Docs: [http://localhost:8000/docs](http://localhost:8000/docs)
+
+---
+
+## 🧪 Running Tests
+
+FastAPI routes, database migrations, validations, and CRUD operations are fully covered by unit tests.
+
+To run the test suite locally:
+```bash
+pytest
+```
