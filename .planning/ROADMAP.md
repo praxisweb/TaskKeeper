@@ -20,10 +20,10 @@
 **Plans:**
 
 **Wave 1**
-- [ ] 01-01 — Database schema, Pydantic validation, and update endpoint
+- [x] 01-01 — Database schema, Pydantic validation, and update endpoint
 
 **Wave 2 *(blocked on Wave 1 completion)***
-- [ ] 01-02 — Soft delete, restore, permanent delete, and query parameter filtering
+- [x] 01-02 — Soft delete, restore, permanent delete, and query parameter filtering
 
 
 ---
@@ -40,12 +40,12 @@
 6. No page reloads — all interactions use `fetch`
 
 **Plans:**
-- [ ] 2.1 — Static HTML shell + CSS (board layout, three columns, responsive)
-- [ ] 2.2 — API client module (fetch wrapper for all task endpoints)
-- [ ] 2.3 — Task card component and board render logic
-- [ ] 2.4 — Add task form (inline or modal, column-aware)
-- [ ] 2.5 — Edit task modal (all fields, save/cancel)
-- [ ] 2.6 — Status change controls on cards
+- [x] 2.1 — Static HTML shell + CSS (board layout, three columns, responsive)
+- [x] 2.2 — API client module (fetch wrapper for all task endpoints)
+- [x] 2.3 — Task card component and board render logic
+- [x] 2.4 — Add task form (inline or modal, column-aware)
+- [x] 2.5 — Edit task modal (all fields, save/cancel)
+- [x] 2.6 — Status change controls on cards
 
 ---
 
@@ -60,10 +60,10 @@
 5. Trash view is empty state when no deleted tasks exist
 
 **Plans:**
-- [ ] 3.1 — Delete button and soft-delete wiring on task cards
-- [ ] 3.2 — Trash view page/section (layout, task list, empty state)
-- [ ] 3.3 — Restore and permanent-delete actions in Trash view
-- [ ] 3.4 — Navigation between board and Trash view
+- [x] 3.1 — Delete button and soft-delete wiring on task cards
+- [x] 3.2 — Trash view page/section (layout, task list, empty state)
+- [x] 3.3 — Restore and permanent-delete actions in Trash view
+- [x] 3.4 — Navigation between board and Trash view
 
 ---
 
@@ -79,6 +79,6 @@
 6. No JS errors in browser console during normal use
 
 **Plans:**
-- [ ] 4.1 — UI polish (priority badge colors, due date overdue highlight, empty states)
-- [ ] 4.2 — README setup instructions and local dev notes
-- [ ] 4.3 — Final smoke test (full user flow from create to trash to restore to permanent delete)
+- [x] 4.1 — UI polish (priority badge colors, due date overdue highlight, empty states)
+- [x] 4.2 — README setup instructions and local dev notes
+- [x] 4.3 — Final smoke test (full user flow from create to trash to restore to permanent delete)
