@@ -1,19 +1,31 @@
-# TaskKeeper v0.1 — Tracer Bullet Implementation Plan (rev 2)
+# TaskKeeper v0.1 — Tracer Bullet Implementation Plan (rev 4)
 
 > **For Antigravity:** REQUIRED WORKFLOW: Use `.agent/workflows/execute-plan.md` to execute this plan in single-flow mode.
 
 **Goal:** Build one working vertical slice — create a task via a form, persist it in SQLite, and render all tasks on a Kanban board.
 
-**Architecture:** Flat three-file layout: `main.py` (FastAPI app + DB + routes), `tasks.db` (SQLite, auto-created), `index.html` (vanilla JS SPA). No auth, no migrations tool, no build step.
+**Architecture:** Flat three-file layout: `main.py` (FastAPI app + DB + routes), `tasks.db` (SQLite, auto-created next to `main.py`), `index.html` (vanilla JS SPA). No auth, no migrations tool, no build step.
 
 **Tech Stack:** Python 3.11+, FastAPI, uvicorn, SQLite (stdlib `sqlite3`), Pydantic v2, vanilla HTML/CSS/JS
 
-**Changes from rev 1 (CEO review fixes):**
-- Test isolation: in-memory SQLite via `conftest.py` (prevents flaky tests from shared state)
-- Empty title validation: `field_validator` on `TaskIn` rejects blank strings
-- Frontend uses relative URLs: no hardcoded `http://localhost:8000`
-- Lifespan pattern replaces deprecated `@app.on_event("startup")`
-- Added missing 422 tests: empty title, invalid status on GET
+**Decision log (grill-me session):**
+- Flat project structure — no `src/` layout for v0.1
+- `status` column: `TEXT + CHECK(status IN ('todo','in_progress','done'))` — human-readable + DB-level guard
+- Task ordering: `ORDER BY created_at ASC` — oldest first, queue-style
+- Python 3.11+ — `X | None` syntax, no `Optional` import
+- `tasks.db` lives next to `main.py` via `BASE_DIR = Path(__file__).parent`
+- Test DB in `tempfile.gettempdir()` — no project root pollution
+- Dependency pinning: `>=` — good enough for a personal local tool
+- `escapeHtml()` helper in frontend — fixes `&` entity rendering and XSS
+- 422 validation errors parsed and shown in the UI
+
+**Earlier review fixes (CEO + Eng):**
+- Test isolation: shared file DB + `DELETE` teardown (`:memory:` breaks cross-request persistence)
+- `field_validator` rejects blank/empty titles
+- Lifespan pattern replaces deprecated `@app.on_event`
+- Frontend uses relative URLs — no hardcoded port
+- `FileResponse` uses `BASE_DIR / "index.html"` — works from any CWD
+- `test_frontend_route_exists` patches `BASE_DIR` via monkeypatch
 
 ---
 
@@ -52,10 +64,15 @@ Create `tests/conftest.py`:
 
 ```python
 import os
+import sqlite3
+import tempfile
 import pytest
 
-# Must be set before importing main so DB_PATH is resolved at module load
-os.environ["DB_PATH"] = ":memory:"
+# IMPORTANT: os.environ must be set BEFORE importing main.
+# main.py reads DB_PATH at module load time. Keep this as the
+# very first statement before any 'from main import ...' call.
+TEST_DB = os.path.join(tempfile.gettempdir(), "taskkeeper_test.db")
+os.environ["DB_PATH"] = TEST_DB
 
 from fastapi.testclient import TestClient
 from main import app, init_db
@@ -63,18 +80,25 @@ from main import app, init_db
 
 @pytest.fixture(autouse=True)
 def fresh_db():
-    """Give every test a clean in-memory database."""
+    """Create schema before each test; wipe all rows after.
+
+    Why a temp file instead of :memory:?
+    sqlite3.connect(':memory:') creates a NEW database per connection.
+    get_db() opens a new connection per request, so POST and GET would
+    each see a different (empty) database. A shared file path fixes this.
+    The temp directory is outside the project root — no .gitignore needed.
+    """
     init_db()
     yield
+    with sqlite3.connect(TEST_DB) as conn:
+        conn.execute("DELETE FROM tasks")
+        conn.commit()
 
 
 @pytest.fixture
 def client():
     return TestClient(app)
 ```
-
-> `autouse=True` means every test gets a fresh DB without having to request the fixture.
-> In-memory SQLite is isolated per-connection, so state never bleeds between tests.
 
 **Step 4: Write the failing smoke test**
 
@@ -101,13 +125,15 @@ Expected: FAIL — `main` module not found.
 import os
 import sqlite3
 from contextlib import asynccontextmanager, contextmanager
-from typing import Literal, Optional
+from pathlib import Path
+from typing import Literal
 
 from fastapi import FastAPI
 from fastapi.responses import FileResponse
 from pydantic import BaseModel, field_validator
 
-DB_PATH = os.getenv("DB_PATH", "tasks.db")
+BASE_DIR = Path(__file__).parent
+DB_PATH = os.getenv("DB_PATH", str(BASE_DIR / "tasks.db"))
 
 VALID_STATUSES = Literal["todo", "in_progress", "done"]
 
@@ -118,7 +144,8 @@ def init_db():
             CREATE TABLE IF NOT EXISTS tasks (
                 id         INTEGER PRIMARY KEY AUTOINCREMENT,
                 title      TEXT NOT NULL,
-                status     TEXT NOT NULL DEFAULT 'todo',
+                status     TEXT NOT NULL DEFAULT 'todo'
+                           CHECK(status IN ('todo', 'in_progress', 'done')),
                 created_at TEXT NOT NULL DEFAULT (datetime('now'))
             )
         """)
@@ -303,6 +330,15 @@ def test_get_tasks_returns_created_task(client):
     assert data[0]["title"] == "My task"
 
 
+def test_get_tasks_oldest_first(client):
+    client.post("/tasks", json={"title": "First"})
+    client.post("/tasks", json={"title": "Second"})
+    response = client.get("/tasks")
+    data = response.json()
+    assert data[0]["title"] == "First"
+    assert data[1]["title"] == "Second"
+
+
 def test_get_tasks_filter_by_status(client):
     client.post("/tasks", json={"title": "Todo task", "status": "todo"})
     client.post("/tasks", json={"title": "Active task", "status": "in_progress"})
@@ -318,28 +354,30 @@ def test_get_tasks_rejects_invalid_status(client):
     assert response.status_code == 422
 ```
 
+> Note `test_get_tasks_oldest_first` — this explicitly validates the `ASC` ordering decision.
+
 **Step 2: Run tests — verify they fail**
 
 ```bash
 pytest tests/test_main.py -k "test_get_tasks" -v
 ```
 
-Expected: 4 tests fail — route not defined.
+Expected: 5 tests fail — route not defined.
 
 **Step 3: Add GET route to `main.py`**
 
 ```python
 @app.get("/tasks", response_model=list[TaskOut])
-def get_tasks(status: Optional[VALID_STATUSES] = None):
+def get_tasks(status: VALID_STATUSES | None = None):
     with get_db() as conn:
         if status:
             rows = conn.execute(
-                "SELECT id, title, status, created_at FROM tasks WHERE status = ? ORDER BY created_at DESC",
+                "SELECT id, title, status, created_at FROM tasks WHERE status = ? ORDER BY created_at ASC",
                 (status,),
             ).fetchall()
         else:
             rows = conn.execute(
-                "SELECT id, title, status, created_at FROM tasks ORDER BY created_at DESC"
+                "SELECT id, title, status, created_at FROM tasks ORDER BY created_at ASC"
             ).fetchall()
     return [dict(r) for r in rows]
 ```
@@ -371,7 +409,7 @@ Expected: task created with id/title/status/created_at, returned in GET response
 
 ```bash
 git add main.py tests/test_main.py
-git commit -m "feat: add GET /tasks with optional status filter and validation"
+git commit -m "feat: add GET /tasks with status filter, ASC ordering, and 3.11+ type syntax"
 ```
 
 ---
@@ -384,12 +422,13 @@ git commit -m "feat: add GET /tasks with optional status filter and validation"
 
 **Step 1: Add frontend route to `main.py`**
 
-Add this route (before other routes, so `/` doesn't shadow anything):
+`BASE_DIR` is already defined in `main.py` from Task 1. Add this route:
 
 ```python
 @app.get("/", response_class=FileResponse)
 def serve_frontend():
-    return FileResponse("index.html")
+    # Absolute path — works regardless of where uvicorn is invoked from
+    return FileResponse(BASE_DIR / "index.html")
 ```
 
 **Step 2: Write the test**
@@ -398,10 +437,11 @@ Add to `tests/test_main.py`:
 
 ```python
 def test_frontend_route_exists(client, tmp_path, monkeypatch):
-    # Create a minimal index.html so FileResponse doesn't 404
+    # Patch BASE_DIR so FileResponse points to a temp index.html
     index = tmp_path / "index.html"
     index.write_text("<html><body>ok</body></html>")
-    monkeypatch.chdir(tmp_path)
+    import main
+    monkeypatch.setattr(main, "BASE_DIR", tmp_path)
     response = client.get("/")
     assert response.status_code == 200
 ```
@@ -416,7 +456,11 @@ Expected: PASS.
 
 **Step 3: Create `index.html`**
 
-Note: `const API = ''` — relative URL, same origin. No hardcoded port.
+Key decisions reflected here:
+- `const API = ''` — relative URL, no hardcoded port
+- `escapeHtml()` — fixes `&` entity rendering and XSS
+- 422 errors parsed from `detail[].msg` and shown to user
+- `ORDER BY ASC` means newest tasks appear at bottom — form clears after submit
 
 ```html
 <!DOCTYPE html>
@@ -433,11 +477,11 @@ Note: `const API = ''` — relative URL, same origin. No hardcoded port.
     .column { background: #fff; border-radius: 8px; padding: 16px; min-height: 200px; }
     .column h2 { font-size: 0.9rem; text-transform: uppercase; letter-spacing: 0.05em; color: #666; margin-bottom: 12px; }
     .task-card { background: #f9f9f9; border: 1px solid #e5e5e5; border-radius: 6px; padding: 10px 12px; margin-bottom: 8px; font-size: 0.9rem; }
-    .add-form { display: flex; gap: 8px; margin-bottom: 24px; }
+    .add-form { display: flex; gap: 8px; margin-bottom: 12px; }
     .add-form input { flex: 1; padding: 8px 12px; border: 1px solid #ddd; border-radius: 6px; font-size: 0.9rem; }
     .add-form button { padding: 8px 16px; background: #2563eb; color: #fff; border: none; border-radius: 6px; cursor: pointer; font-size: 0.9rem; }
     .add-form button:hover { background: #1d4ed8; }
-    .error { color: #dc2626; font-size: 0.85rem; margin-top: 8px; }
+    .error { color: #dc2626; font-size: 0.85rem; margin-bottom: 16px; }
   </style>
 </head>
 <body>
@@ -464,6 +508,14 @@ Note: `const API = ''` — relative URL, same origin. No hardcoded port.
   <script>
     const API = '';  // same origin — no hardcoded port
 
+    function escapeHtml(str) {
+      return str
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;');
+    }
+
     function showError(msg) {
       const el = document.getElementById('error-msg');
       el.textContent = msg;
@@ -484,7 +536,7 @@ Note: `const API = ''` — relative URL, same origin. No hardcoded port.
           const col = document.getElementById(`col-${status}`);
           const filtered = tasks.filter(t => t.status === status);
           col.innerHTML = filtered.length
-            ? filtered.map(t => `<div class="task-card">${t.title}</div>`).join('')
+            ? filtered.map(t => `<div class="task-card">${escapeHtml(t.title)}</div>`).join('')
             : '<p style="color:#aaa;font-size:0.85rem">No tasks</p>';
         });
       } catch (err) {
@@ -502,6 +554,12 @@ Note: `const API = ''` — relative URL, same origin. No hardcoded port.
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ title }),
         });
+        if (res.status === 422) {
+          const err = await res.json();
+          const msg = err.detail.map(d => d.msg).join(', ');
+          showError(msg);
+          return;
+        }
         if (!res.ok) throw new Error(`Server error: ${res.status}`);
         document.getElementById('task-title').value = '';
         clearError();
@@ -535,16 +593,17 @@ Open http://localhost:8000.
 
 - [ ] Kanban board renders with three columns
 - [ ] "No tasks" placeholder shows in each empty column
-- [ ] Type a task name → "Add Task" → task appears in "To Do"
-- [ ] Refresh the page → task is still there (SQLite persisted)
-- [ ] Open http://localhost:8000/docs → both endpoints visible
-- [ ] Stop the server → reload the page → error message appears (not a blank board)
+- [ ] Type `Buy milk & cheese` → submit → card shows `Buy milk &amp; cheese` ... wait, no — `escapeHtml` runs in the card render, not in storage. The DB stores `Buy milk & cheese`, the card renders `Buy milk &amp; cheese` correctly as text. Verify this looks right in the browser.
+- [ ] Type a task with `<b>bold</b>` → card shows literal `<b>bold</b>` text, not bold formatting
+- [ ] Refresh the page → tasks still there (SQLite persisted)
+- [ ] Stop the server → reload the page → error message appears (not blank board)
+- [ ] http://localhost:8000/docs → both endpoints visible
 
 **Step 6: Commit**
 
 ```bash
 git add main.py index.html tests/test_main.py
-git commit -m "feat: serve Kanban frontend with error handling and relative API URLs"
+git commit -m "feat: serve Kanban frontend — escapeHtml, 422 error display, relative API URL"
 ```
 
 ---
@@ -553,8 +612,9 @@ git commit -m "feat: serve Kanban frontend with error handling and relative API 
 
 - [ ] `pytest tests/ -v` — all tests pass with zero warnings
 - [ ] `uvicorn main:app --reload` — starts without deprecation warnings
-- [ ] http://localhost:8000 — board renders, tasks persist across refresh
-- [ ] Blank title → "Add Task" → no task created (form requires input)
+- [ ] http://localhost:8000 — board renders, tasks persist across page refresh
+- [ ] Task with `&` in title renders correctly (not as broken HTML entity)
+- [ ] Blank title submit → form stays, no task created (HTML `required` catches it client-side)
 - [ ] Stop server → reload → error message shown, not blank board
 - [ ] http://localhost:8000/docs — both endpoints visible
 
@@ -568,3 +628,4 @@ Once this slice is working:
 3. Add `DELETE /tasks/{id}` (soft-delete via `deleted` flag)
 4. Build trash view
 5. Add task cards with full field display
+6. Add `position` column for manual drag-to-reorder

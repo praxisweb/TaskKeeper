@@ -18,11 +18,13 @@
 8. `/docs` returns the FastAPI OpenAPI UI
 
 **Plans:**
-- [ ] 1.1 — Database model and schema (SQLite + SQLAlchemy, Task model with all fields, auto-create on startup)
-- [ ] 1.2 — CRUD endpoints (POST, GET list, GET single, PUT)
-- [ ] 1.3 — Soft-delete, restore, and permanent-delete endpoints
-- [ ] 1.4 — Pydantic schemas, validation, and error responses
-- [ ] 1.5 — Integration tests for all endpoints
+
+**Wave 1**
+- [ ] 01-01 — Database schema, Pydantic validation, and update endpoint
+
+**Wave 2 *(blocked on Wave 1 completion)***
+- [ ] 01-02 — Soft delete, restore, permanent delete, and query parameter filtering
+
 
 ---
 
