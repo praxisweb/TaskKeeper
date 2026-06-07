@@ -1,9 +1,13 @@
-.planning/qa_baseline.md
-.planning/fix_plan_remediation.md
+.agent/
+.agents/
+.github/
+.mex/
+.planning/
 .ralph/logs/
 .env
 .env.proxy
 .env.container
+
 
 # Python
 __pycache__/
