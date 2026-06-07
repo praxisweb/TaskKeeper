@@ -555,6 +555,12 @@
       flex-direction: column;
       gap: 24px;
       animation: fadeIn var(--transition-normal);
+      background: rgba(15, 23, 42, 0.4);
+      border: 1px solid rgba(239, 68, 68, 0.15);
+      border-radius: var(--border-radius-lg);
+      padding: 24px;
+      backdrop-filter: blur(12px);
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
     }
 
     .trash-view.active {
@@ -967,6 +973,11 @@
             </div>
           `;
         } else {
+          const statusMap = {
+            'todo': 'To Do',
+            'in_progress': 'In Progress',
+            'done': 'Done'
+          };
           container.innerHTML = tasks.map(t => `
             <div class="task-card trash-card">
               <div class="task-card-header">
@@ -975,7 +986,7 @@
               </div>
               ${t.description ? `<p class="task-desc">${escapeHtml(t.description)}</p>` : ''}
               <div class="task-meta">
-                <span style="font-size:0.75rem; color:var(--text-muted)">Column: ${t.status}</span>
+                <span style="font-size:0.75rem; color:var(--text-muted)">Column: ${statusMap[t.status] || t.status}</span>
                 <div class="card-actions">
                   <button class="btn btn-success" style="padding: 6px 12px; font-size: 0.75rem;" onclick="restoreTask(${t.id})">
                     Restore
