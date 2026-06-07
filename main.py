@@ -18,14 +18,32 @@ def init_db():
     with sqlite3.connect(DB_PATH) as conn:
         conn.execute("""
             CREATE TABLE IF NOT EXISTS tasks (
-                id         INTEGER PRIMARY KEY AUTOINCREMENT,
-                title      TEXT NOT NULL,
-                status     TEXT NOT NULL DEFAULT 'todo'
-                           CHECK(status IN ('todo', 'in_progress', 'done')),
-                created_at TEXT NOT NULL DEFAULT (datetime('now'))
+                id          INTEGER PRIMARY KEY AUTOINCREMENT,
+                title       TEXT NOT NULL,
+                status      TEXT NOT NULL DEFAULT 'todo'
+                            CHECK(status IN ('todo', 'in_progress', 'done')),
+                created_at  TEXT NOT NULL DEFAULT (datetime('now')),
+                description TEXT,
+                priority    TEXT NOT NULL DEFAULT 'medium'
+                            CHECK(priority IN ('low', 'medium', 'high')),
+                due_date    TEXT,
+                deleted     INTEGER NOT NULL DEFAULT 0
+                            CHECK(deleted IN (0, 1))
             )
         """)
+        # Dynamic migration for existing DB files
+        cursor = conn.execute("PRAGMA table_info(tasks)")
+        columns = {row[1] for row in cursor.fetchall()}
+        if "description" not in columns:
+            conn.execute("ALTER TABLE tasks ADD COLUMN description TEXT")
+        if "priority" not in columns:
+            conn.execute("ALTER TABLE tasks ADD COLUMN priority TEXT NOT NULL DEFAULT 'medium'")
+        if "due_date" not in columns:
+            conn.execute("ALTER TABLE tasks ADD COLUMN due_date TEXT")
+        if "deleted" not in columns:
+            conn.execute("ALTER TABLE tasks ADD COLUMN deleted INTEGER NOT NULL DEFAULT 0")
         conn.commit()
+
 
 
 @contextmanager

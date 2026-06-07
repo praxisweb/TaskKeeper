@@ -96,6 +96,44 @@ def test_frontend_route_exists(client, monkeypatch):
         shutil.rmtree(temp_dir, ignore_errors=True)
 
 
+def test_database_migrations_safe(tmp_path):
+    import sqlite3
+    import main
+    # Setup: Create a legacy database without description, priority, due_date, deleted columns
+    legacy_db = str(tmp_path / "legacy.db")
+    with sqlite3.connect(legacy_db) as conn:
+        conn.execute("""
+            CREATE TABLE tasks (
+                id         INTEGER PRIMARY KEY AUTOINCREMENT,
+                title      TEXT NOT NULL,
+                status     TEXT NOT NULL DEFAULT 'todo'
+                           CHECK(status IN ('todo', 'in_progress', 'done')),
+                created_at TEXT NOT NULL DEFAULT (datetime('now'))
+            )
+        """)
+        conn.execute("INSERT INTO tasks (title, status) VALUES ('Legacy Task', 'todo')")
+        conn.commit()
+
+    # Execution: Trigger init_db with the patched path
+    orig_db = main.DB_PATH
+    main.DB_PATH = legacy_db
+    try:
+        main.init_db()
+        
+        # Verification: Check that new columns exist and legacy data is intact
+        with sqlite3.connect(legacy_db) as conn:
+            conn.row_factory = sqlite3.Row
+            row = conn.execute("SELECT * FROM tasks WHERE title = 'Legacy Task'").fetchone()
+            assert "description" in row.keys()
+            assert row["description"] is None
+            assert row["priority"] == "medium"
+            assert row["due_date"] is None
+            assert row["deleted"] == 0
+    finally:
+        main.DB_PATH = orig_db
+
+
+
 
 
 
