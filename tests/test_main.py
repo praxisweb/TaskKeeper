@@ -133,6 +133,43 @@ def test_database_migrations_safe(tmp_path):
         main.DB_PATH = orig_db
 
 
+def test_create_task_all_fields_success(client):
+    payload = {
+        "title": "Clean room",
+        "status": "todo",
+        "description": "Sweep and dust",
+        "priority": "high",
+        "due_date": "2026-06-30"
+    }
+    response = client.post("/tasks", json=payload)
+    assert response.status_code == 201
+    data = response.json()
+    assert data["title"] == "Clean room"
+    assert data["description"] == "Sweep and dust"
+    assert data["priority"] == "high"
+    assert data["due_date"] == "2026-06-30"
+    assert data["deleted"] is False
+
+
+def test_create_task_rejects_invalid_due_date_format(client):
+    payload = {
+        "title": "Clean room",
+        "due_date": "06/30/2026"
+    }
+    response = client.post("/tasks", json=payload)
+    assert response.status_code == 422
+
+
+def test_create_task_rejects_invalid_priority(client):
+    payload = {
+        "title": "Clean room",
+        "priority": "critical"
+    }
+    response = client.post("/tasks", json=payload)
+    assert response.status_code == 422
+
+
+
 
 
 

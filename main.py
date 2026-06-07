@@ -1,4 +1,5 @@
 import os
+import re
 import sqlite3
 from contextlib import asynccontextmanager, contextmanager
 from pathlib import Path
@@ -73,6 +74,9 @@ def health():
 class TaskIn(BaseModel):
     title: str
     status: VALID_STATUSES = "todo"
+    description: str | None = None
+    priority: Literal["low", "medium", "high"] = "medium"
+    due_date: str | None = None
 
     @field_validator("title")
     @classmethod
@@ -81,42 +85,78 @@ class TaskIn(BaseModel):
             raise ValueError("title cannot be blank")
         return v.strip()
 
+    @field_validator("due_date")
+    @classmethod
+    def validate_due_date(cls, v: str | None) -> str | None:
+        if v is None or v == "":
+            return None
+        if not re.match(r"^\d{4}-\d{2}-\d{2}$", v):
+            raise ValueError("due_date must be in YYYY-MM-DD format")
+        return v
+
 
 class TaskOut(BaseModel):
     id: int
     title: str
     status: str
+    description: str | None
+    priority: str
+    due_date: str | None
     created_at: str
+    deleted: bool
 
 
 @app.post("/tasks", response_model=TaskOut, status_code=201)
 def create_task(task: TaskIn):
     with get_db() as conn:
         cursor = conn.execute(
-            "INSERT INTO tasks (title, status) VALUES (?, ?)",
-            (task.title, task.status),
+            """
+            INSERT INTO tasks (title, status, description, priority, due_date)
+            VALUES (?, ?, ?, ?, ?)
+            """,
+            (task.title, task.status, task.description, task.priority, task.due_date),
         )
         conn.commit()
         row = conn.execute(
-            "SELECT id, title, status, created_at FROM tasks WHERE id = ?",
+            "SELECT id, title, status, description, priority, due_date, created_at, deleted FROM tasks WHERE id = ?",
             (cursor.lastrowid,),
         ).fetchone()
-    return dict(row)
+    data = dict(row)
+    data["deleted"] = bool(data["deleted"])
+    return data
 
 
 @app.get("/tasks", response_model=list[TaskOut])
-def get_tasks(status: VALID_STATUSES | None = None):
+def get_tasks(status: VALID_STATUSES | None = None, deleted: bool = False):
+    deleted_val = 1 if deleted else 0
     with get_db() as conn:
         if status:
             rows = conn.execute(
-                "SELECT id, title, status, created_at FROM tasks WHERE status = ? ORDER BY created_at ASC",
-                (status,),
+                """
+                SELECT id, title, status, description, priority, due_date, created_at, deleted 
+                FROM tasks 
+                WHERE status = ? AND deleted = ? 
+                ORDER BY created_at ASC
+                """,
+                (status, deleted_val),
             ).fetchall()
         else:
             rows = conn.execute(
-                "SELECT id, title, status, created_at FROM tasks ORDER BY created_at ASC"
+                """
+                SELECT id, title, status, description, priority, due_date, created_at, deleted 
+                FROM tasks 
+                WHERE deleted = ? 
+                ORDER BY created_at ASC
+                """,
+                (deleted_val,),
             ).fetchall()
-    return [dict(r) for r in rows]
+    res = []
+    for r in rows:
+        d = dict(r)
+        d["deleted"] = bool(d["deleted"])
+        res.append(d)
+    return res
+
 
 
 @app.get("/", response_class=FileResponse)
