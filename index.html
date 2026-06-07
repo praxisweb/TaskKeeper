@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>TaskKeeper — Modern Kanban Task Board</title>
+  <title>TaskKeeper — Premium Kanban Task Manager</title>
   <!-- Google Fonts: Inter and Outfit -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -11,23 +11,33 @@
   <style>
     :root {
       --bg-color: #0b0f19;
-      --card-bg: #1e293b;
-      --card-border: rgba(255, 255, 255, 0.05);
+      --card-bg: rgba(30, 41, 59, 0.7);
+      --card-border: rgba(255, 255, 255, 0.08);
       --text-main: #f8fafc;
       --text-muted: #94a3b8;
       
-      --color-todo-1: #6366f1;
-      --color-todo-2: #4f46e5;
-      --color-in_progress-1: #f59e0b;
-      --color-in_progress-2: #d97706;
-      --color-done-1: #10b981;
-      --color-done-2: #059669;
+      --color-todo: #6366f1;
+      --color-todo-hover: #4f46e5;
+      --color-in-progress: #f59e0b;
+      --color-in-progress-hover: #d97706;
+      --color-done: #10b981;
+      --color-done-hover: #059669;
+
+      --priority-low-bg: rgba(16, 185, 129, 0.15);
+      --priority-low-text: #34d399;
+      --priority-medium-bg: rgba(245, 158, 11, 0.15);
+      --priority-medium-text: #fbbf24;
+      --priority-high-bg: rgba(239, 68, 68, 0.15);
+      --priority-high-text: #f87171;
       
       --font-display: 'Outfit', 'Inter', system-ui, sans-serif;
       --font-body: 'Inter', system-ui, sans-serif;
       
       --transition-fast: 0.2s cubic-bezier(0.4, 0, 0.2, 1);
       --transition-normal: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      --border-radius-sm: 8px;
+      --border-radius-md: 12px;
+      --border-radius-lg: 16px;
     }
 
     * {
@@ -46,8 +56,9 @@
       padding: 40px 24px;
       overflow-y: auto;
       background-image: 
-        radial-gradient(at 0% 0%, rgba(99, 102, 241, 0.1) 0px, transparent 50%),
-        radial-gradient(at 100% 100%, rgba(16, 185, 129, 0.05) 0px, transparent 50%);
+        radial-gradient(at 0% 0%, rgba(99, 102, 241, 0.12) 0px, transparent 50%),
+        radial-gradient(at 100% 100%, rgba(16, 185, 129, 0.08) 0px, transparent 50%);
+      background-attachment: fixed;
     }
 
     .container {
@@ -75,75 +86,88 @@
     }
 
     .logo-mark {
-      width: 32px;
-      height: 32px;
-      background: linear-gradient(135deg, var(--color-todo-1), var(--color-done-1));
-      border-radius: 8px;
-      box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+      width: 36px;
+      height: 36px;
+      background: linear-gradient(135deg, var(--color-todo), var(--color-done));
+      border-radius: var(--border-radius-sm);
+      box-shadow: 0 4px 14px rgba(99, 102, 241, 0.4);
     }
 
     h1 {
       font-family: var(--font-display);
-      font-size: 2rem;
+      font-size: 2.2rem;
       font-weight: 700;
       background: linear-gradient(to right, #ffffff, #94a3b8);
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
-      letter-spacing: -0.02em;
+      letter-spacing: -0.03em;
     }
 
-    .add-form {
+    .header-actions {
       display: flex;
       gap: 12px;
-      width: 100%;
-      max-width: 480px;
-      background: rgba(30, 41, 59, 0.7);
-      border: 1px solid var(--card-border);
-      padding: 6px;
-      border-radius: 12px;
-      backdrop-filter: blur(12px);
-      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+      align-items: center;
     }
 
-    .add-form input {
-      flex: 1;
-      background: transparent;
-      border: none;
+    .btn {
+      background: rgba(255, 255, 255, 0.08);
       color: var(--text-main);
-      padding: 10px 14px;
-      font-size: 0.95rem;
-      font-family: var(--font-body);
-      outline: none;
-    }
-
-    .add-form input::placeholder {
-      color: var(--text-muted);
-    }
-
-    .add-form button {
-      background: linear-gradient(135deg, var(--color-todo-1), var(--color-todo-2));
-      color: #ffffff;
-      border: none;
+      border: 1px solid var(--card-border);
       padding: 10px 20px;
-      border-radius: 8px;
+      border-radius: var(--border-radius-sm);
       font-family: var(--font-display);
       font-weight: 600;
       font-size: 0.9rem;
       cursor: pointer;
-      box-shadow: 0 4px 12px rgba(99, 102, 241, 0.2);
+      display: flex;
+      align-items: center;
+      gap: 8px;
       transition: var(--transition-fast);
     }
 
-    .add-form button:hover {
+    .btn:hover {
+      background: rgba(255, 255, 255, 0.15);
       transform: translateY(-1px);
-      box-shadow: 0 6px 16px rgba(99, 102, 241, 0.3);
-      filter: brightness(1.1);
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, var(--color-todo), var(--color-todo-hover));
+      color: #ffffff;
+      border: none;
+      box-shadow: 0 4px 12px rgba(99, 102, 241, 0.25);
+    }
+
+    .btn-primary:hover {
+      background: linear-gradient(135deg, var(--color-todo-hover), var(--color-todo));
+      box-shadow: 0 6px 16px rgba(99, 102, 241, 0.35);
+    }
+
+    .btn-danger {
+      background: linear-gradient(135deg, #ef4444, #dc2626);
+      border: none;
+      box-shadow: 0 4px 12px rgba(239, 68, 68, 0.25);
+    }
+
+    .btn-danger:hover {
+      background: linear-gradient(135deg, #dc2626, #b91c1c);
+      box-shadow: 0 6px 16px rgba(239, 68, 68, 0.35);
+    }
+
+    .btn-success {
+      background: linear-gradient(135deg, var(--color-done), var(--color-done-hover));
+      border: none;
+      box-shadow: 0 4px 12px rgba(16, 185, 129, 0.25);
+    }
+
+    .btn-success:hover {
+      background: linear-gradient(135deg, var(--color-done-hover), var(--color-done));
+      box-shadow: 0 6px 16px rgba(16, 185, 129, 0.35);
     }
 
     .error-banner {
-      background: rgba(239, 68, 68, 0.15);
-      border: 1px solid rgba(239, 68, 68, 0.3);
-      border-radius: 12px;
+      background: rgba(239, 68, 68, 0.12);
+      border: 1px solid rgba(239, 68, 68, 0.25);
+      border-radius: var(--border-radius-md);
       padding: 16px;
       margin-bottom: 32px;
       color: #fca5a5;
@@ -168,15 +192,15 @@
     }
 
     .column {
-      background: rgba(15, 23, 42, 0.6);
+      background: rgba(15, 23, 42, 0.4);
       border: 1px solid var(--card-border);
-      border-radius: 16px;
+      border-radius: var(--border-radius-lg);
       padding: 20px;
-      min-height: 450px;
+      min-height: 550px;
       display: flex;
       flex-direction: column;
-      backdrop-filter: blur(8px);
-      box-shadow: 0 4px 30px rgba(0, 0, 0, 0.15);
+      backdrop-filter: blur(12px);
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
     }
 
     .column-header {
@@ -187,34 +211,53 @@
     }
 
     .column-dot {
-      width: 8px;
-      height: 8px;
+      width: 10px;
+      height: 10px;
       border-radius: 50%;
-      margin-right: 10px;
-      box-shadow: 0 0 10px currentColor;
+      margin-right: 12px;
+      box-shadow: 0 0 12px currentColor;
     }
 
     .column-title {
-      font-size: 1.05rem;
+      font-size: 1.1rem;
       font-weight: 600;
-      letter-spacing: 0.02em;
+      letter-spacing: 0.03em;
       text-transform: uppercase;
-      color: var(--text-main);
     }
 
     .column-count {
-      margin-left: auto;
+      margin-left: 10px;
       background: rgba(255, 255, 255, 0.08);
       padding: 2px 8px;
       border-radius: 12px;
-      font-size: 0.75rem;
-      font-weight: 500;
+      font-size: 0.8rem;
+      font-weight: 600;
       color: var(--text-muted);
     }
 
-    .col-todo { color: var(--color-todo-1); }
-    .col-in_progress { color: var(--color-in_progress-1); }
-    .col-done { color: var(--color-done-1); }
+    .column-add-btn {
+      margin-left: auto;
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
+      cursor: pointer;
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: var(--transition-fast);
+    }
+
+    .column-add-btn:hover {
+      background: rgba(255, 255, 255, 0.08);
+      color: var(--text-main);
+    }
+
+    .col-todo { color: var(--color-todo); }
+    .col-in-progress { color: var(--color-in-progress); }
+    .col-done { color: var(--color-done); }
 
     .task-list {
       display: flex;
@@ -226,14 +269,16 @@
     .task-card {
       background: var(--card-bg);
       border: 1px solid var(--card-border);
-      border-radius: 12px;
-      padding: 16px;
-      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      border-radius: var(--border-radius-md);
+      padding: 18px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
       transition: var(--transition-normal);
       display: flex;
       flex-direction: column;
       gap: 12px;
-      cursor: default;
+      cursor: pointer;
+      position: relative;
+      overflow: hidden;
       animation: fadeIn var(--transition-normal);
     }
 
@@ -243,16 +288,61 @@
     }
 
     .task-card:hover {
-      transform: translateY(-3px) scale(1.01);
-      box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
-      border-color: rgba(255, 255, 255, 0.1);
+      transform: translateY(-3px);
+      box-shadow: 0 12px 24px rgba(0, 0, 0, 0.3);
+      border-color: rgba(255, 255, 255, 0.15);
+      background: rgba(30, 41, 59, 0.85);
+    }
+
+    .task-card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 12px;
     }
 
     .task-title-text {
-      font-size: 0.95rem;
-      font-weight: 500;
+      font-size: 1rem;
+      font-weight: 600;
       line-height: 1.4;
       color: var(--text-main);
+      word-break: break-word;
+      font-family: var(--font-display);
+    }
+
+    .priority-badge {
+      font-size: 0.7rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      padding: 2px 8px;
+      border-radius: 6px;
+      letter-spacing: 0.05em;
+      white-space: nowrap;
+    }
+
+    .priority-low {
+      background: var(--priority-low-bg);
+      color: var(--priority-low-text);
+    }
+
+    .priority-medium {
+      background: var(--priority-medium-bg);
+      color: var(--priority-medium-text);
+    }
+
+    .priority-high {
+      background: var(--priority-high-bg);
+      color: var(--priority-high-text);
+    }
+
+    .task-desc {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      line-height: 1.5;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
       word-break: break-word;
     }
 
@@ -260,17 +350,55 @@
       display: flex;
       align-items: center;
       justify-content: space-between;
-      border-top: 1px solid rgba(255, 255, 255, 0.04);
-      padding-top: 10px;
+      border-top: 1px solid rgba(255, 255, 255, 0.05);
+      padding-top: 12px;
       margin-top: 4px;
+      gap: 8px;
     }
 
-    .task-time {
+    .task-date {
       font-size: 0.75rem;
       color: var(--text-muted);
       display: flex;
       align-items: center;
       gap: 4px;
+      white-space: nowrap;
+    }
+
+    .task-date.overdue {
+      color: var(--priority-high-text);
+      font-weight: 600;
+    }
+
+    .card-actions {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .action-btn {
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      width: 26px;
+      height: 26px;
+      border-radius: 6px;
+      color: var(--text-muted);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: var(--transition-fast);
+    }
+
+    .action-btn:hover {
+      background: rgba(255, 255, 255, 0.12);
+      color: var(--text-main);
+    }
+
+    .action-btn.delete-btn:hover {
+      background: rgba(239, 68, 68, 0.2);
+      color: #ef4444;
+      border-color: rgba(239, 68, 68, 0.3);
     }
 
     .empty-state {
@@ -279,19 +407,187 @@
       align-items: center;
       justify-content: center;
       flex-grow: 1;
-      padding: 32px 16px;
+      padding: 40px 16px;
       text-align: center;
-      border: 2px dashed rgba(255, 255, 255, 0.03);
-      border-radius: 12px;
+      border: 2px dashed rgba(255, 255, 255, 0.04);
+      border-radius: var(--border-radius-md);
       color: var(--text-muted);
-      font-size: 0.85rem;
-      font-style: italic;
+      font-size: 0.9rem;
+      background: rgba(255, 255, 255, 0.01);
     }
 
     .empty-icon {
+      font-size: 2rem;
+      margin-bottom: 12px;
+      opacity: 0.4;
+    }
+
+    /* Modal Styling */
+    .modal-backdrop {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(11, 15, 25, 0.8);
+      backdrop-filter: blur(8px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity var(--transition-normal);
+    }
+
+    .modal-backdrop.active {
+      opacity: 1;
+      pointer-events: all;
+    }
+
+    .modal {
+      background: #151f32;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: var(--border-radius-lg);
+      width: 100%;
+      max-width: 500px;
+      padding: 32px;
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+      transform: scale(0.95);
+      transition: transform var(--transition-normal);
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    .modal-backdrop.active .modal {
+      transform: scale(1);
+    }
+
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .modal-title {
+      font-family: var(--font-display);
+      font-size: 1.4rem;
+      font-weight: 700;
+      background: linear-gradient(to right, #ffffff, #cbd5e1);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .modal-close {
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
+      cursor: pointer;
       font-size: 1.5rem;
-      margin-bottom: 8px;
-      opacity: 0.3;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      transition: var(--transition-fast);
+    }
+
+    .modal-close:hover {
+      background: rgba(255, 255, 255, 0.08);
+      color: var(--text-main);
+    }
+
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .form-group label {
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .form-control {
+      background: rgba(30, 41, 59, 0.5);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: var(--border-radius-sm);
+      color: var(--text-main);
+      padding: 12px 16px;
+      font-size: 0.95rem;
+      font-family: var(--font-body);
+      outline: none;
+      transition: var(--transition-fast);
+    }
+
+    .form-control:focus {
+      border-color: var(--color-todo);
+      background: rgba(30, 41, 59, 0.8);
+      box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15);
+    }
+
+    textarea.form-control {
+      resize: vertical;
+      min-height: 100px;
+    }
+
+    .form-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+    }
+
+    .modal-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 12px;
+      margin-top: 12px;
+    }
+
+    /* Trash Overlay Styling */
+    .trash-view {
+      display: none;
+      flex-direction: column;
+      gap: 24px;
+      animation: fadeIn var(--transition-normal);
+      background: rgba(15, 23, 42, 0.4);
+      border: 1px solid rgba(239, 68, 68, 0.15);
+      border-radius: var(--border-radius-lg);
+      padding: 24px;
+      backdrop-filter: blur(12px);
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+    }
+
+    .trash-view.active {
+      display: flex;
+    }
+
+    .trash-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 12px;
+    }
+
+    .trash-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 20px;
+    }
+
+    .trash-card {
+      background: rgba(30, 41, 59, 0.4);
+      border: 1px dashed rgba(239, 68, 68, 0.2);
+    }
+
+    .trash-card:hover {
+      border-color: rgba(239, 68, 68, 0.4);
+      background: rgba(30, 41, 59, 0.6);
     }
 
     @media (max-width: 768px) {
@@ -300,10 +596,13 @@
       }
       header {
         flex-direction: column;
-        align-items: stretch;
+        align-items: flex-start;
       }
-      .add-form {
-        max-width: 100%;
+      .board {
+        grid-template-columns: 1fr;
+      }
+      .form-row {
+        grid-template-columns: 1fr;
       }
     }
   </style>
@@ -315,10 +614,24 @@
         <div class="logo-mark"></div>
         <h1>TaskKeeper</h1>
       </div>
-      <form class="add-form" id="add-form">
-        <input type="text" id="task-title" placeholder="What needs to be done?" required autocomplete="off" />
-        <button type="submit">Create Task</button>
-      </form>
+      <div class="header-actions">
+        <button class="btn btn-primary" id="new-task-btn">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="12" y1="5" x2="12" y2="19"></line>
+            <line x1="5" y1="12" x2="19" y2="12"></line>
+          </svg>
+          Add Task
+        </button>
+        <button class="btn" id="toggle-trash-btn">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="3 6 5 6 21 6"></polyline>
+            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+            <line x1="10" y1="11" x2="10" y2="17"></line>
+            <line x1="14" y1="11" x2="14" y2="17"></line>
+          </svg>
+          <span id="trash-btn-text">View Trash</span>
+        </button>
+      </div>
     </header>
 
     <div class="error-banner" id="error-banner" style="display: none">
@@ -330,43 +643,153 @@
       <span id="error-text">An error occurred</span>
     </div>
 
-    <main class="board">
-      <!-- To Do -->
-      <div class="column">
-        <div class="column-header col-todo">
-          <div class="column-dot" style="background-color: var(--color-todo-1)"></div>
-          <h2 class="column-title">To Do</h2>
-          <span class="column-count" id="count-todo">0</span>
+    <!-- Kanban Board Section -->
+    <div id="board-section">
+      <main class="board">
+        <!-- To Do -->
+        <div class="column">
+          <div class="column-header col-todo">
+            <div class="column-dot" style="background-color: var(--color-todo)"></div>
+            <h2 class="column-title">To Do</h2>
+            <span class="column-count" id="count-todo">0</span>
+            <button class="column-add-btn" onclick="openCreateModal('todo')" title="Add task to To Do">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="12" y1="5" x2="12" y2="19"></line>
+                <line x1="5" y1="12" x2="19" y2="12"></line>
+              </svg>
+            </button>
+          </div>
+          <div class="task-list" id="col-todo"></div>
         </div>
-        <div class="task-list" id="col-todo"></div>
-      </div>
 
-      <!-- In Progress -->
-      <div class="column">
-        <div class="column-header col-in_progress">
-          <div class="column-dot" style="background-color: var(--color-in_progress-1)"></div>
-          <h2 class="column-title">In Progress</h2>
-          <span class="column-count" id="count-in_progress">0</span>
+        <!-- In Progress -->
+        <div class="column">
+          <div class="column-header col-in-progress">
+            <div class="column-dot" style="background-color: var(--color-in-progress)"></div>
+            <h2 class="column-title">In Progress</h2>
+            <span class="column-count" id="count-in_progress">0</span>
+            <button class="column-add-btn" onclick="openCreateModal('in_progress')" title="Add task to In Progress">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="12" y1="5" x2="12" y2="19"></line>
+                <line x1="5" y1="12" x2="19" y2="12"></line>
+              </svg>
+            </button>
+          </div>
+          <div class="task-list" id="col-in_progress"></div>
         </div>
-        <div class="task-list" id="col-in_progress"></div>
-      </div>
 
-      <!-- Done -->
-      <div class="column">
-        <div class="column-header col-done">
-          <div class="column-dot" style="background-color: var(--color-done-1)"></div>
-          <h2 class="column-title">Done</h2>
-          <span class="column-count" id="count-done">0</span>
+        <!-- Done -->
+        <div class="column">
+          <div class="column-header col-done">
+            <div class="column-dot" style="background-color: var(--color-done)"></div>
+            <h2 class="column-title">Done</h2>
+            <span class="column-count" id="count-done">0</span>
+            <button class="column-add-btn" onclick="openCreateModal('done')" title="Add task to Done">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="12" y1="5" x2="12" y2="19"></line>
+                <line x1="5" y1="12" x2="19" y2="12"></line>
+              </svg>
+            </button>
+          </div>
+          <div class="task-list" id="col-done"></div>
         </div>
-        <div class="task-list" id="col-done"></div>
+      </main>
+    </div>
+
+    <!-- Trash View Section -->
+    <div class="trash-view" id="trash-section">
+      <div class="trash-header">
+        <h2 style="font-family: var(--font-display); font-size: 1.5rem;">Trash Bin</h2>
       </div>
-    </main>
+      <div class="trash-grid" id="trash-list-container"></div>
+    </div>
+  </div>
+
+  <!-- Task Edit / Create Modal -->
+  <div class="modal-backdrop" id="task-modal-backdrop">
+    <div class="modal">
+      <div class="modal-header">
+        <h3 class="modal-title" id="modal-title-text">Create Task</h3>
+        <button class="modal-close" id="modal-close-btn">&times;</button>
+      </div>
+      <form id="task-form">
+        <input type="hidden" id="form-task-id" />
+        
+        <div class="form-group" style="margin-bottom: 16px;">
+          <label for="form-title">Title *</label>
+          <input type="text" id="form-title" class="form-control" placeholder="What needs to be done?" required autocomplete="off" />
+        </div>
+
+        <div class="form-group" style="margin-bottom: 16px;">
+          <label for="form-desc">Description</label>
+          <textarea id="form-desc" class="form-control" placeholder="Add some details..."></textarea>
+        </div>
+
+        <div class="form-row" style="margin-bottom: 16px;">
+          <div class="form-group">
+            <label for="form-priority">Priority</label>
+            <select id="form-priority" class="form-control">
+              <option value="low">Low</option>
+              <option value="medium" selected>Medium</option>
+              <option value="high">High</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label for="form-due-date">Due Date</label>
+            <input type="date" id="form-due-date" class="form-control" />
+          </div>
+        </div>
+
+        <div class="form-group" style="margin-bottom: 24px;">
+          <label for="form-status">Status</label>
+          <select id="form-status" class="form-control">
+            <option value="todo">To Do</option>
+            <option value="in_progress">In Progress</option>
+            <option value="done">Done</option>
+          </select>
+        </div>
+
+        <div class="modal-actions">
+          <button type="button" class="btn" id="modal-cancel-btn">Cancel</button>
+          <button type="submit" class="btn btn-primary" id="modal-save-btn">Save Task</button>
+        </div>
+      </form>
+    </div>
   </div>
 
   <script>
     const API = ''; // relative path for same-origin
+    let currentTasks = [];
+    let deletedTasks = [];
+    let isTrashViewActive = false;
+
+    // Elements
+    const boardSection = document.getElementById('board-section');
+    const trashSection = document.getElementById('trash-section');
+    const toggleTrashBtn = document.getElementById('toggle-trash-btn');
+    const trashBtnText = document.getElementById('trash-btn-text');
+    const newTaskBtn = document.getElementById('new-task-btn');
+    const errorBanner = document.getElementById('error-banner');
+    const errorText = document.getElementById('error-text');
+
+    // Modal elements
+    const taskModalBackdrop = document.getElementById('task-modal-backdrop');
+    const modalCloseBtn = document.getElementById('modal-close-btn');
+    const modalCancelBtn = document.getElementById('modal-cancel-btn');
+    const taskForm = document.getElementById('task-form');
+    const modalTitleText = document.getElementById('modal-title-text');
+    
+    // Form fields
+    const formTaskId = document.getElementById('form-task-id');
+    const formTitle = document.getElementById('form-title');
+    const formDesc = document.getElementById('form-desc');
+    const formPriority = document.getElementById('form-priority');
+    const formDueDate = document.getElementById('form-due-date');
+    const formStatus = document.getElementById('form-status');
 
     function escapeHtml(str) {
+      if (!str) return '';
       return str
         .replace(/&/g, '&amp;')
         .replace(/</g, '&lt;')
@@ -374,48 +797,109 @@
         .replace(/"/g, '&quot;');
     }
 
-    function formatDate(isoString) {
-      if (!isoString) return '';
-      // Format as brief readable time (e.g. "Jun 6, 18:30")
+    function formatDate(dateStr) {
+      if (!dateStr) return '';
       try {
-        const dt = new Date(isoString + 'Z'); // SQLite timestamp is UTC
-        if (isNaN(dt.getTime())) return isoString;
+        const dt = new Date(dateStr + 'T00:00:00');
+        if (isNaN(dt.getTime())) return dateStr;
         return dt.toLocaleDateString(undefined, { 
           month: 'short', 
-          day: 'numeric' 
-        }) + ', ' + dt.toLocaleTimeString(undefined, { 
-          hour: '2-digit', 
-          minute: '2-digit',
-          hour12: false
+          day: 'numeric',
+          year: 'numeric'
         });
       } catch (e) {
-        return isoString;
+        return dateStr;
+      }
+    }
+
+    function isOverdue(dateStr) {
+      if (!dateStr) return false;
+      try {
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        const due = new Date(dateStr + 'T00:00:00');
+        return due < today;
+      } catch (e) {
+        return false;
       }
     }
 
     function showError(msg) {
-      const banner = document.getElementById('error-banner');
-      const text = document.getElementById('error-text');
-      text.textContent = msg;
-      banner.style.display = 'flex';
+      errorText.textContent = msg;
+      errorBanner.style.display = 'flex';
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     }
 
     function clearError() {
-      document.getElementById('error-banner').style.display = 'none';
+      errorBanner.style.display = 'none';
     }
 
+    // Modal Control
+    function openCreateModal(defaultStatus = 'todo') {
+      modalTitleText.textContent = 'Create Task';
+      formTaskId.value = '';
+      formTitle.value = '';
+      formDesc.value = '';
+      formPriority.value = 'medium';
+      formDueDate.value = '';
+      formStatus.value = defaultStatus;
+      
+      taskModalBackdrop.classList.add('active');
+      formTitle.focus();
+    }
+
+    function openEditModal(taskId) {
+      const task = currentTasks.find(t => t.id === taskId);
+      if (!task) return;
+
+      modalTitleText.textContent = 'Task Details';
+      formTaskId.value = task.id;
+      formTitle.value = task.title;
+      formDesc.value = task.description || '';
+      formPriority.value = task.priority;
+      formDueDate.value = task.due_date || '';
+      formStatus.value = task.status;
+
+      taskModalBackdrop.classList.add('active');
+      formTitle.focus();
+    }
+
+    function closeModal() {
+      taskModalBackdrop.classList.remove('active');
+    }
+
+    // Toggle Trash
+    function toggleTrashView() {
+      isTrashViewActive = !isTrashViewActive;
+      if (isTrashViewActive) {
+        boardSection.style.display = 'none';
+        trashSection.classList.add('active');
+        trashBtnText.textContent = 'Back to Board';
+        newTaskBtn.style.display = 'none';
+        loadDeletedTasks();
+      } else {
+        boardSection.style.display = 'block';
+        trashSection.classList.remove('active');
+        trashBtnText.textContent = 'View Trash';
+        newTaskBtn.style.display = 'flex';
+        loadTasks();
+      }
+      clearError();
+    }
+
+    // Load tasks from API
     async function loadTasks() {
       try {
-        const res = await fetch(`${API}/tasks`);
-        if (!res.ok) throw new Error(`Server returned code ${res.status}`);
+        const res = await fetch(`${API}/tasks?deleted=false`);
+        if (!res.ok) throw new Error(`HTTP Error ${res.status}`);
         const tasks = await res.json();
+        currentTasks = tasks;
         clearError();
 
         const statuses = ['todo', 'in_progress', 'done'];
         statuses.forEach(status => {
           const listContainer = document.getElementById(`col-${status}`);
           const countBadge = document.getElementById(`count-${status}`);
-          
           const filtered = tasks.filter(t => t.status === status);
           countBadge.textContent = filtered.length;
 
@@ -427,39 +911,203 @@
               </div>
             `;
           } else {
-            listContainer.innerHTML = filtered.map(t => `
-              <div class="task-card">
-                <div class="task-title-text">${escapeHtml(t.title)}</div>
-                <div class="task-meta">
-                  <div class="task-time">
-                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                      <circle cx="12" cy="12" r="10"></circle>
-                      <polyline points="12 6 12 12 16 14"></polyline>
-                    </svg>
-                    <span>${formatDate(t.created_at)}</span>
+            listContainer.innerHTML = filtered.map(t => {
+              const overdue = isOverdue(t.due_date) && t.status !== 'done';
+              return `
+                <div class="task-card" onclick="openEditModal(${t.id})">
+                  <div class="task-card-header">
+                    <span class="task-title-text">${escapeHtml(t.title)}</span>
+                    <span class="priority-badge priority-${t.priority}">${t.priority}</span>
+                  </div>
+                  ${t.description ? `<p class="task-desc">${escapeHtml(t.description)}</p>` : ''}
+                  <div class="task-meta">
+                    <div class="task-date ${overdue ? 'overdue' : ''}">
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                        <line x1="16" y1="2" x2="16" y2="6"></line>
+                        <line x1="8" y1="2" x2="8" y2="6"></line>
+                        <line x1="3" y1="10" x2="21" y2="10"></line>
+                      </svg>
+                      <span>${t.due_date ? formatDate(t.due_date) : 'No due date'}</span>
+                    </div>
+                    <div class="card-actions" onclick="event.stopPropagation()">
+                      <button class="action-btn" onclick="moveTask(${t.id}, 'prev')" ${t.status === 'todo' ? 'disabled style="opacity:0.3;cursor:not-allowed;"' : ''} title="Move back">
+                        &larr;
+                      </button>
+                      <button class="action-btn" onclick="moveTask(${t.id}, 'next')" ${t.status === 'done' ? 'disabled style="opacity:0.3;cursor:not-allowed;"' : ''} title="Move forward">
+                        &rarr;
+                      </button>
+                      <button class="action-btn delete-btn" onclick="softDeleteTask(${t.id})" title="Delete task">
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                          <polyline points="3 6 5 6 21 6"></polyline>
+                          <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                        </svg>
+                      </button>
+                    </div>
                   </div>
                 </div>
-              </div>
-            `).join('');
+              `;
+            }).join('');
           }
         });
       } catch (err) {
-        showError(`Failed to fetch tasks: ${err.message}`);
+        showError(`Failed to load tasks: ${err.message}`);
       }
     }
 
-    document.getElementById('add-form').addEventListener('submit', async (e) => {
-      e.preventDefault();
-      const input = document.getElementById('task-title');
-      const title = input.value.trim();
-      if (!title) return;
+    // Load deleted tasks from API
+    async function loadDeletedTasks() {
+      try {
+        const res = await fetch(`${API}/tasks?deleted=true`);
+        if (!res.ok) throw new Error(`HTTP Error ${res.status}`);
+        const tasks = await res.json();
+        deletedTasks = tasks;
+        clearError();
+
+        const container = document.getElementById('trash-list-container');
+        if (tasks.length === 0) {
+          container.innerHTML = `
+            <div class="empty-state" style="grid-column: 1 / -1;">
+              <div class="empty-icon">🗑️</div>
+              <div>Trash is empty</div>
+            </div>
+          `;
+        } else {
+          const statusMap = {
+            'todo': 'To Do',
+            'in_progress': 'In Progress',
+            'done': 'Done'
+          };
+          container.innerHTML = tasks.map(t => `
+            <div class="task-card trash-card">
+              <div class="task-card-header">
+                <span class="task-title-text">${escapeHtml(t.title)}</span>
+                <span class="priority-badge priority-${t.priority}">${t.priority}</span>
+              </div>
+              ${t.description ? `<p class="task-desc">${escapeHtml(t.description)}</p>` : ''}
+              <div class="task-meta">
+                <span style="font-size:0.75rem; color:var(--text-muted)">Column: ${statusMap[t.status] || t.status}</span>
+                <div class="card-actions">
+                  <button class="btn btn-success" style="padding: 6px 12px; font-size: 0.75rem;" onclick="restoreTask(${t.id})">
+                    Restore
+                  </button>
+                  <button class="btn btn-danger" style="padding: 6px 12px; font-size: 0.75rem;" onclick="permanentDeleteTask(${t.id})">
+                    Delete
+                  </button>
+                </div>
+              </div>
+            </div>
+          `).join('');
+        }
+      } catch (err) {
+        showError(`Failed to load trash: ${err.message}`);
+      }
+    }
+
+    // Actions
+    async function moveTask(taskId, direction) {
+      const task = currentTasks.find(t => t.id === taskId);
+      if (!task) return;
+
+      const statuses = ['todo', 'in_progress', 'done'];
+      const currentIdx = statuses.indexOf(task.status);
+      let nextIdx = currentIdx;
+
+      if (direction === 'prev' && currentIdx > 0) nextIdx--;
+      if (direction === 'next' && currentIdx < 2) nextIdx++;
+
+      if (nextIdx === currentIdx) return;
 
       try {
-        const res = await fetch(`${API}/tasks`, {
-          method: 'POST',
+        const updatedTask = {
+          title: task.title,
+          description: task.description,
+          priority: task.priority,
+          due_date: task.due_date,
+          status: statuses[nextIdx]
+        };
+
+        const res = await fetch(`${API}/tasks/${taskId}`, {
+          method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ title }),
+          body: JSON.stringify(updatedTask)
         });
+
+        if (!res.ok) throw new Error(`HTTP Error ${res.status}`);
+        await loadTasks();
+      } catch (err) {
+        showError(`Failed to move task: ${err.message}`);
+      }
+    }
+
+    async function softDeleteTask(taskId) {
+      if (!confirm('Are you sure you want to delete this task? (You can restore it later from Trash)')) return;
+      try {
+        const res = await fetch(`${API}/tasks/${taskId}`, {
+          method: 'DELETE'
+        });
+        if (!res.ok) throw new Error(`HTTP Error ${res.status}`);
+        await loadTasks();
+      } catch (err) {
+        showError(`Failed to delete task: ${err.message}`);
+      }
+    }
+
+    async function restoreTask(taskId) {
+      try {
+        const res = await fetch(`${API}/tasks/${taskId}/restore`, {
+          method: 'POST'
+        });
+        if (!res.ok) throw new Error(`HTTP Error ${res.status}`);
+        await loadDeletedTasks();
+      } catch (err) {
+        showError(`Failed to restore task: ${err.message}`);
+      }
+    }
+
+    async function permanentDeleteTask(taskId) {
+      if (!confirm('This task will be deleted permanently. This action is irreversible. Proceed?')) return;
+      try {
+        const res = await fetch(`${API}/tasks/${taskId}/permanent`, {
+          method: 'DELETE'
+        });
+        if (!res.ok) throw new Error(`HTTP Error ${res.status}`);
+        await loadDeletedTasks();
+      } catch (err) {
+        showError(`Failed to permanently delete task: ${err.message}`);
+      }
+    }
+
+    // Modal submit handler (Save Task)
+    taskForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      
+      const taskId = formTaskId.value;
+      const payload = {
+        title: formTitle.value.trim(),
+        description: formDesc.value.trim() || null,
+        priority: formPriority.value,
+        due_date: formDueDate.value || null,
+        status: formStatus.value
+      };
+
+      try {
+        let res;
+        if (taskId) {
+          // Editing existing task
+          res = await fetch(`${API}/tasks/${taskId}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+          });
+        } else {
+          // Creating new task
+          res = await fetch(`${API}/tasks`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+          });
+        }
 
         if (res.status === 422) {
           const errData = await res.json();
@@ -468,17 +1116,30 @@
           return;
         }
 
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        if (!res.ok) throw new Error(`HTTP Error ${res.status}`);
         
-        input.value = '';
+        closeModal();
         clearError();
         await loadTasks();
       } catch (err) {
-        showError(`Failed to create task: ${err.message}`);
+        showError(`Failed to save task: ${err.message}`);
       }
     });
 
-    // Initial load
+    // Event listeners
+    newTaskBtn.addEventListener('click', () => openCreateModal());
+    toggleTrashBtn.addEventListener('click', toggleTrashView);
+    modalCloseBtn.addEventListener('click', closeModal);
+    modalCancelBtn.addEventListener('click', closeModal);
+
+    // Close modal on click outside
+    taskModalBackdrop.addEventListener('click', (e) => {
+      if (e.target === taskModalBackdrop) {
+        closeModal();
+      }
+    });
+
+    // Initial tasks fetch
     loadTasks();
   </script>
 </body>
