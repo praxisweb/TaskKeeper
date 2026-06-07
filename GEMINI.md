@@ -1,38 +1,38 @@
 # Gemini Project Context
 
-## スキル・ルーティング
+## Skill Routing
 
-ユーザーのリクエストが以下のスキルに該当する場合、常に最初の動作として **Skill ツール** を呼び出してください。
-これらのスキルには専用のワークフローが定義されており、高精度な推論が提供されます。
+If the user's request matches any of the following skills, always invoke the corresponding **Skill tool** as the first action.
+These skills have dedicated workflows defined to provide highly accurate reasoning.
 
-主要ルーティング・ルール:
-- プロダクトのアイデア、実現可能性の検討、ブレーンストーミング → invoke office-hours
-- バグ、エラー、原因調査 → invoke investigate
-- シップ、デプロイ、プッシュ、PR作成 → invoke ship
-- QA、サイトのテスト、バグ発見 → invoke qa
-- コードレビュー、差分の確認 → invoke review
-- リリーズ後のドキュメント更新 → invoke document-release
-- 週次レトロスペクティブ → invoke retro
-- デザインシステム、ブランド相談 → invoke design-consultation
-- ビジュアル監査、デザイン調整 → invoke design-review
-- アーキテクチャ・レビュー → invoke plan-eng-review
-- 自己反省、行動規範の確認、反省の実施 → invoke antigravity-reflection
+Key Routing Rules:
+- Product ideas, feasibility studies, brainstorming → invoke office-hours
+- Bugs, errors, root cause investigation → invoke investigate
+- Shipping, deployment, pushing, PR creation → invoke ship
+- QA, site testing, bug finding → invoke qa
+- Code review, checking diffs → invoke review
+- Document updates after release → invoke document-release
+- Weekly retrospectives → invoke retro
+- Design systems, brand consultation → invoke design-consultation
+- Visual audits, design adjustments → invoke design-review
+- Architecture reviews → invoke plan-eng-review
+- Self-reflection, code of conduct check, conducting retrospectives → invoke antigravity-reflection
 
-## AI エージェント活用ガイド (GStack Workflow)
+## AI Agent Guidance (GStack Workflow)
 
-このプロジェクトでは、GStack の強力な「自律型ワークフロー」を活用します。
+This project utilizes GStack's powerful "autonomous workflows."
 
-### 1. プランニングと CEO レビューの重要性
-実装を開始する前に、必ず `/autoplan` または個別のレビュー（`/plan-ceo-review` 等）を実行してください。
-特に **CEO レビュー** では、AIが「開発者」ではなく「シリコンバレーの創業者」として振る舞い、プランの妥当性を厳しく（しかし建設的に）評価します。
+### 1. Importance of Planning and CEO Reviews
+Before starting implementation, always run `/autoplan` or individual reviews (such as `/plan-ceo-review`).
+In particular, during the **CEO review**, the AI will act as a "Silicon Valley founder" rather than a "developer" to rigorously (but constructively) evaluate the plan's validity.
 
-### 2. インタラクティブな意思決定 (AskUserQuestion)
-GStack のワークフロー実行中、AIは以下のフォーマットで質問を投げることがあります：
-- **Re-ground**: 現在の状況の再確認。
-- **Simplify**: 課題の平易な説明。
-- **Recommend**: AI 推奨の選択肢（網羅性スコア 10/10 を優先します）。
-- **Options**: A, B などの選択肢の提示。
-ユーザーは **「Aでお願いします」** のように答えるだけで、AIが自律的に作業を継続します。
+### 2. Interactive Decision Making (AskUserQuestion)
+During a GStack workflow, the AI may ask questions in the following formats:
+- **Re-ground:** Re-confirming the current situation.
+- **Simplify:** Explaining the problem simply.
+- **Recommend:** AI-recommended option (prioritizing completeness score of 10/10).
+- **Options:** Presenting options like A, B, etc.
+The user only needs to reply with something like **"A, please"** for the AI to autonomously continue its work.
 
-### 3. 完全性の原則 (Boil the Lake)
-AIによる実装は限界費用が極めて低いため、常に「ひとまず動くコード」よりも「エッジケースまで考慮した完璧な実装」を推奨します。AIが提示する「網羅性 10/10」の選択肢を選ぶことで、技術的負債の少ない高品質なコードが手に入ります。
+### 3. Principle of Completeness (Boil the Lake)
+Because the marginal cost of AI implementation is extremely low, we always recommend "flawless implementation considering edge cases" over "just getting code to work." By choosing the option with a "completeness score of 10/10" presented by the AI, you will get high-quality code with minimal technical debt.
