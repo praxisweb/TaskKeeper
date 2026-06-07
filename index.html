@@ -1,0 +1,485 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>TaskKeeper — Modern Kanban Task Board</title>
+  <!-- Google Fonts: Inter and Outfit -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-color: #0b0f19;
+      --card-bg: #1e293b;
+      --card-border: rgba(255, 255, 255, 0.05);
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+      
+      --color-todo-1: #6366f1;
+      --color-todo-2: #4f46e5;
+      --color-in_progress-1: #f59e0b;
+      --color-in_progress-2: #d97706;
+      --color-done-1: #10b981;
+      --color-done-2: #059669;
+      
+      --font-display: 'Outfit', 'Inter', system-ui, sans-serif;
+      --font-body: 'Inter', system-ui, sans-serif;
+      
+      --transition-fast: 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+      --transition-normal: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background-color: var(--bg-color);
+      color: var(--text-main);
+      font-family: var(--font-body);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      padding: 40px 24px;
+      overflow-y: auto;
+      background-image: 
+        radial-gradient(at 0% 0%, rgba(99, 102, 241, 0.1) 0px, transparent 50%),
+        radial-gradient(at 100% 100%, rgba(16, 185, 129, 0.05) 0px, transparent 50%);
+    }
+
+    .container {
+      max-width: 1200px;
+      width: 100%;
+      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+      flex-grow: 1;
+    }
+
+    header {
+      margin-bottom: 40px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 20px;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .logo-mark {
+      width: 32px;
+      height: 32px;
+      background: linear-gradient(135deg, var(--color-todo-1), var(--color-done-1));
+      border-radius: 8px;
+      box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+    }
+
+    h1 {
+      font-family: var(--font-display);
+      font-size: 2rem;
+      font-weight: 700;
+      background: linear-gradient(to right, #ffffff, #94a3b8);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      letter-spacing: -0.02em;
+    }
+
+    .add-form {
+      display: flex;
+      gap: 12px;
+      width: 100%;
+      max-width: 480px;
+      background: rgba(30, 41, 59, 0.7);
+      border: 1px solid var(--card-border);
+      padding: 6px;
+      border-radius: 12px;
+      backdrop-filter: blur(12px);
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+    }
+
+    .add-form input {
+      flex: 1;
+      background: transparent;
+      border: none;
+      color: var(--text-main);
+      padding: 10px 14px;
+      font-size: 0.95rem;
+      font-family: var(--font-body);
+      outline: none;
+    }
+
+    .add-form input::placeholder {
+      color: var(--text-muted);
+    }
+
+    .add-form button {
+      background: linear-gradient(135deg, var(--color-todo-1), var(--color-todo-2));
+      color: #ffffff;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 8px;
+      font-family: var(--font-display);
+      font-weight: 600;
+      font-size: 0.9rem;
+      cursor: pointer;
+      box-shadow: 0 4px 12px rgba(99, 102, 241, 0.2);
+      transition: var(--transition-fast);
+    }
+
+    .add-form button:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 6px 16px rgba(99, 102, 241, 0.3);
+      filter: brightness(1.1);
+    }
+
+    .error-banner {
+      background: rgba(239, 68, 68, 0.15);
+      border: 1px solid rgba(239, 68, 68, 0.3);
+      border-radius: 12px;
+      padding: 16px;
+      margin-bottom: 32px;
+      color: #fca5a5;
+      font-size: 0.9rem;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      animation: slideDown var(--transition-normal);
+      backdrop-filter: blur(8px);
+    }
+
+    @keyframes slideDown {
+      from { transform: translateY(-10px); opacity: 0; }
+      to { transform: translateY(0); opacity: 1; }
+    }
+
+    .board {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+      gap: 24px;
+      align-items: start;
+    }
+
+    .column {
+      background: rgba(15, 23, 42, 0.6);
+      border: 1px solid var(--card-border);
+      border-radius: 16px;
+      padding: 20px;
+      min-height: 450px;
+      display: flex;
+      flex-direction: column;
+      backdrop-filter: blur(8px);
+      box-shadow: 0 4px 30px rgba(0, 0, 0, 0.15);
+    }
+
+    .column-header {
+      display: flex;
+      align-items: center;
+      margin-bottom: 20px;
+      font-family: var(--font-display);
+    }
+
+    .column-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      margin-right: 10px;
+      box-shadow: 0 0 10px currentColor;
+    }
+
+    .column-title {
+      font-size: 1.05rem;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      text-transform: uppercase;
+      color: var(--text-main);
+    }
+
+    .column-count {
+      margin-left: auto;
+      background: rgba(255, 255, 255, 0.08);
+      padding: 2px 8px;
+      border-radius: 12px;
+      font-size: 0.75rem;
+      font-weight: 500;
+      color: var(--text-muted);
+    }
+
+    .col-todo { color: var(--color-todo-1); }
+    .col-in_progress { color: var(--color-in_progress-1); }
+    .col-done { color: var(--color-done-1); }
+
+    .task-list {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      flex-grow: 1;
+    }
+
+    .task-card {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 12px;
+      padding: 16px;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      transition: var(--transition-normal);
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      cursor: default;
+      animation: fadeIn var(--transition-normal);
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(8px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .task-card:hover {
+      transform: translateY(-3px) scale(1.01);
+      box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+      border-color: rgba(255, 255, 255, 0.1);
+    }
+
+    .task-title-text {
+      font-size: 0.95rem;
+      font-weight: 500;
+      line-height: 1.4;
+      color: var(--text-main);
+      word-break: break-word;
+    }
+
+    .task-meta {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-top: 1px solid rgba(255, 255, 255, 0.04);
+      padding-top: 10px;
+      margin-top: 4px;
+    }
+
+    .task-time {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .empty-state {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      flex-grow: 1;
+      padding: 32px 16px;
+      text-align: center;
+      border: 2px dashed rgba(255, 255, 255, 0.03);
+      border-radius: 12px;
+      color: var(--text-muted);
+      font-size: 0.85rem;
+      font-style: italic;
+    }
+
+    .empty-icon {
+      font-size: 1.5rem;
+      margin-bottom: 8px;
+      opacity: 0.3;
+    }
+
+    @media (max-width: 768px) {
+      body {
+        padding: 24px 16px;
+      }
+      header {
+        flex-direction: column;
+        align-items: stretch;
+      }
+      .add-form {
+        max-width: 100%;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <div class="brand">
+        <div class="logo-mark"></div>
+        <h1>TaskKeeper</h1>
+      </div>
+      <form class="add-form" id="add-form">
+        <input type="text" id="task-title" placeholder="What needs to be done?" required autocomplete="off" />
+        <button type="submit">Create Task</button>
+      </form>
+    </header>
+
+    <div class="error-banner" id="error-banner" style="display: none">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="12" cy="12" r="10"></circle>
+        <line x1="12" y1="8" x2="12" y2="12"></line>
+        <line x1="12" y1="16" x2="12.01" y2="16"></line>
+      </svg>
+      <span id="error-text">An error occurred</span>
+    </div>
+
+    <main class="board">
+      <!-- To Do -->
+      <div class="column">
+        <div class="column-header col-todo">
+          <div class="column-dot" style="background-color: var(--color-todo-1)"></div>
+          <h2 class="column-title">To Do</h2>
+          <span class="column-count" id="count-todo">0</span>
+        </div>
+        <div class="task-list" id="col-todo"></div>
+      </div>
+
+      <!-- In Progress -->
+      <div class="column">
+        <div class="column-header col-in_progress">
+          <div class="column-dot" style="background-color: var(--color-in_progress-1)"></div>
+          <h2 class="column-title">In Progress</h2>
+          <span class="column-count" id="count-in_progress">0</span>
+        </div>
+        <div class="task-list" id="col-in_progress"></div>
+      </div>
+
+      <!-- Done -->
+      <div class="column">
+        <div class="column-header col-done">
+          <div class="column-dot" style="background-color: var(--color-done-1)"></div>
+          <h2 class="column-title">Done</h2>
+          <span class="column-count" id="count-done">0</span>
+        </div>
+        <div class="task-list" id="col-done"></div>
+      </div>
+    </main>
+  </div>
+
+  <script>
+    const API = ''; // relative path for same-origin
+
+    function escapeHtml(str) {
+      return str
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;');
+    }
+
+    function formatDate(isoString) {
+      if (!isoString) return '';
+      // Format as brief readable time (e.g. "Jun 6, 18:30")
+      try {
+        const dt = new Date(isoString + 'Z'); // SQLite timestamp is UTC
+        if (isNaN(dt.getTime())) return isoString;
+        return dt.toLocaleDateString(undefined, { 
+          month: 'short', 
+          day: 'numeric' 
+        }) + ', ' + dt.toLocaleTimeString(undefined, { 
+          hour: '2-digit', 
+          minute: '2-digit',
+          hour12: false
+        });
+      } catch (e) {
+        return isoString;
+      }
+    }
+
+    function showError(msg) {
+      const banner = document.getElementById('error-banner');
+      const text = document.getElementById('error-text');
+      text.textContent = msg;
+      banner.style.display = 'flex';
+    }
+
+    function clearError() {
+      document.getElementById('error-banner').style.display = 'none';
+    }
+
+    async function loadTasks() {
+      try {
+        const res = await fetch(`${API}/tasks`);
+        if (!res.ok) throw new Error(`Server returned code ${res.status}`);
+        const tasks = await res.json();
+        clearError();
+
+        const statuses = ['todo', 'in_progress', 'done'];
+        statuses.forEach(status => {
+          const listContainer = document.getElementById(`col-${status}`);
+          const countBadge = document.getElementById(`count-${status}`);
+          
+          const filtered = tasks.filter(t => t.status === status);
+          countBadge.textContent = filtered.length;
+
+          if (filtered.length === 0) {
+            listContainer.innerHTML = `
+              <div class="empty-state">
+                <div class="empty-icon">📭</div>
+                <div>No tasks here</div>
+              </div>
+            `;
+          } else {
+            listContainer.innerHTML = filtered.map(t => `
+              <div class="task-card">
+                <div class="task-title-text">${escapeHtml(t.title)}</div>
+                <div class="task-meta">
+                  <div class="task-time">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <circle cx="12" cy="12" r="10"></circle>
+                      <polyline points="12 6 12 12 16 14"></polyline>
+                    </svg>
+                    <span>${formatDate(t.created_at)}</span>
+                  </div>
+                </div>
+              </div>
+            `).join('');
+          }
+        });
+      } catch (err) {
+        showError(`Failed to fetch tasks: ${err.message}`);
+      }
+    }
+
+    document.getElementById('add-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const input = document.getElementById('task-title');
+      const title = input.value.trim();
+      if (!title) return;
+
+      try {
+        const res = await fetch(`${API}/tasks`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ title }),
+        });
+
+        if (res.status === 422) {
+          const errData = await res.json();
+          const messages = errData.detail.map(d => d.msg).join(', ');
+          showError(messages);
+          return;
+        }
+
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        
+        input.value = '';
+        clearError();
+        await loadTasks();
+      } catch (err) {
+        showError(`Failed to create task: ${err.message}`);
+      }
+    });
+
+    // Initial load
+    loadTasks();
+  </script>
+</body>
+</html>
