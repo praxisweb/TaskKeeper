@@ -169,6 +169,37 @@ def test_create_task_rejects_invalid_priority(client):
     assert response.status_code == 422
 
 
+def test_update_task_success(client):
+    task = client.post("/tasks", json={"title": "Fix bug", "status": "todo"}).json()
+    task_id = task["id"]
+
+    payload = {
+        "title": "Fix critical bug",
+        "status": "in_progress",
+        "description": "Race condition in queue",
+        "priority": "high",
+        "due_date": "2026-06-15"
+    }
+    response = client.put(f"/tasks/{task_id}", json=payload)
+    assert response.status_code == 200
+    data = response.json()
+    assert data["title"] == "Fix critical bug"
+    assert data["status"] == "in_progress"
+    assert data["description"] == "Race condition in queue"
+    assert data["priority"] == "high"
+    assert data["due_date"] == "2026-06-15"
+
+
+def test_update_task_not_found(client):
+    payload = {
+        "title": "Not exists",
+        "status": "todo"
+    }
+    response = client.put("/tasks/99999", json=payload)
+    assert response.status_code == 404
+
+
+
 
 
 

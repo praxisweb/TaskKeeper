@@ -5,7 +5,7 @@ from contextlib import asynccontextmanager, contextmanager
 from pathlib import Path
 from typing import Literal
 
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
 from fastapi.responses import FileResponse
 from pydantic import BaseModel, field_validator
 
@@ -157,6 +157,32 @@ def get_tasks(status: VALID_STATUSES | None = None, deleted: bool = False):
         res.append(d)
     return res
 
+
+
+@app.put("/tasks/{task_id}", response_model=TaskOut)
+def update_task(task_id: int, task: TaskIn):
+    with get_db() as conn:
+        existing = conn.execute("SELECT id FROM tasks WHERE id = ?", (task_id,)).fetchone()
+        if not existing:
+            raise HTTPException(status_code=404, detail="Task not found")
+        
+        conn.execute(
+            """
+            UPDATE tasks
+            SET title = ?, status = ?, description = ?, priority = ?, due_date = ?
+            WHERE id = ?
+            """,
+            (task.title, task.status, task.description, task.priority, task.due_date, task_id),
+        )
+        conn.commit()
+        
+        row = conn.execute(
+            "SELECT id, title, status, description, priority, due_date, created_at, deleted FROM tasks WHERE id = ?",
+            (task_id,),
+        ).fetchone()
+    data = dict(row)
+    data["deleted"] = bool(data["deleted"])
+    return data
 
 
 @app.get("/", response_class=FileResponse)
